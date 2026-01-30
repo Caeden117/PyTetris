@@ -89,6 +89,48 @@ class GameScreen(Screen):
                                         text_surface.get_height())
         self.screen.blit(text_surface, name_coords)
         
+    def hold_piece_blit(self, color, block_size, font):
+        """Draw the hold piece container and display held piece if any."""
+        hold_container = self.game['hold_piece_container']
+        rows, cols = 4, 4
+        x, y = place_items_at_offset_percent(self.coords['cont_x']
+                                    ,self.coords['cont_y']
+                                    ,self.coords['cont_width'],
+                                    self.coords['cont_height'],
+                                    hold_container['x_off'],
+                                    hold_container['y_off'])
+        width = block_size * rows
+        height = block_size * cols
+
+        hold_label = self.game['hold_label']
+        x_t, y_t = place_items_at_offset_percent(self.coords['cont_x']
+                                ,self.coords['cont_y']
+                                ,self.coords['cont_width'],
+                                self.coords['cont_height'],
+                                hold_label['x_off'],
+                                hold_label['y_off'])
+        pygame.draw.rect(self.screen, hold_container['color'],
+                         (x, y, width, height),
+                         width=2)
+        self.rectangles.append({"rect":pygame.Rect(x, y, width, height),
+                               "name":'HOLD_PIECE_CONTAINER'})
+        text_surface = font.render('HOLD', True, color)
+        self.screen.blit(text_surface, (x_t, y_t))
+        
+        # Display held piece if exists
+        held_piece = self.event_state.get_held_piece()
+        if held_piece is not None:
+            self._display_held_piece(held_piece, x, y, width, height, block_size)
+
+    def _display_held_piece(self, held_piece, cont_x, cont_y, cont_width, cont_height, block_size):
+        """Render the held piece inside the hold container."""
+        shape = held_piece.shape_rotation[held_piece.shape_name][0]  # Always rotation 0
+        BLACK = held_piece.shape_rotation['BLACK']
+        BLOCK_SIZE = block_size // 2
+        x_off, y_off = 0.2, 0.2
+        x, y = place_items_at_offset_percent(cont_x, cont_y, cont_width, cont_height, x_off, y_off)
+        held_piece.draw_shape(shape=shape, BLACK=BLACK, BLOCK_SIZE=BLOCK_SIZE, x=x, y=y)
+
     def shape_blit(self, color, block_size, font):
         next_shapes_container = self.game['next_shapes_container']
         rows, cols = 8, 8
@@ -219,6 +261,7 @@ class GameScreen(Screen):
         self.scores_blit(font, color)
         self.grid_blit(grid_boundary_color, block_size)
         self.shape_blit(color, block_size, font)
+        self.hold_piece_blit(color, block_size, font)
         self.grid_exit_blit(color, font)
         self.preloader()
         grid_rows = self.event_state.get_grid_matrix()

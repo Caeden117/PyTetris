@@ -20,6 +20,17 @@ class Shape:
         self.current_grid_row = 0
         self.current_grid_col = curr_grid_col
       
+    def reset_to_spawn(self, grid_cells):
+        """Reset piece to spawn position and rotation 0 for hold mechanic."""
+        self.current_rotation = 0
+        self.current_grid_row = 0
+        # Reset to center spawn column (typically column 4 for 10-wide grid)
+        spawn_col = (len(grid_cells[0]) // 2) - 1 if len(grid_cells) > 0 and len(grid_cells[0]) > 0 else 4
+        self.current_grid_col = spawn_col
+        if len(grid_cells) > 0 and len(grid_cells[0]) > spawn_col:
+            self.coords[0] = grid_cells[0][spawn_col]['coords']['x']
+            self.coords[1] = grid_cells[0][spawn_col]['coords']['y']
+
     def increment_current_rotation(self):
         new_rot = self.current_rotation + 1
         shape = self.shape_rotation[self.shape_name][new_rot%4]
@@ -170,6 +181,7 @@ class Shape:
         event_state.set_prev_movement(elapsed_seconds-movement_delay)
         event_state.set_current_shape(-1)
         event_state.set_existing_shapes(current_shape)
+        event_state.set_can_hold(True)  # Re-enable hold for next piece
         score_calculator(self.event_state, self.constants)
         
     def move_shape_down(self, grid_cells):

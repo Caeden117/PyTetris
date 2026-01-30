@@ -37,6 +37,20 @@ class EventVariables:
         self._game_over = False
         self._pause = False
         self._line_completes = 0
+        self._held_piece = None
+        self._can_hold = True
+
+    def set_held_piece(self, piece):
+        self._held_piece = piece
+
+    def get_held_piece(self):
+        return self._held_piece
+
+    def set_can_hold(self, can_hold):
+        self._can_hold = can_hold
+
+    def get_can_hold(self):
+        return self._can_hold
 
     def set_line_complete(self, lc):
         self._line_completes += lc

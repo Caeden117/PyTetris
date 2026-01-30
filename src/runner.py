@@ -23,7 +23,9 @@ class GameRunner:
 
     def pygame_initializer(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.FULLSCREEN)
+        # Set game screen to windowed because I am using a 1440p monitor and I do not like pygame hijacking my monitor resolution
+        # (Caeden)
+        self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.SHOWN)
         self.game_screen = GameScreen(self.screen, constants, self.event_variable,
                                       )
         self.states = StateLoader(constants, self.event_variable, self.screen)

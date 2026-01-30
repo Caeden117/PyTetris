@@ -20,6 +20,19 @@
         "y_off": 0.81
     },
     "block_size": 35,
+    "hold_piece_container": {
+        "x_off": 0.12,
+        "y_off": 0.15,
+        "color": [
+            209,
+            199,
+            4
+        ]
+    },
+    "hold_label": {
+        "x_off": 0.12,
+        "y_off": 0.10
+    },
     "next_shapes_container": {
         "x_off": 0.70,
         "y_off": 0.15,

@@ -38,7 +38,36 @@ class EventHandle:
         elif(event.key == pygame.K_SPACE):
             curr_pause = self.event_variables.get_pause()
             self.event_variables.set_pause(not curr_pause)
+
+        elif(event.key == pygame.K_c):
+            self.hold_piece_action()
         
+    def hold_piece_action(self):
+        """Handle the hold piece mechanic - swap current piece with held piece."""
+        if not self.event_variables.get_can_hold():
+            return  # Already held this turn
+        
+        curr_shape = self.event_variables.get_current_shape()
+        if curr_shape is None or curr_shape == -1:
+            return  # No active piece to hold
+        
+        held_shape = self.event_variables.get_held_piece()
+        grid_rows = self.event_variables.get_grid_matrix()
+        
+        if held_shape is None:
+            # First hold: store current piece, spawn new one from bag
+            curr_shape.reset_to_spawn(grid_rows)
+            self.event_variables.set_held_piece(curr_shape)
+            self.event_variables.set_current_shape(-1)  # Trigger new spawn
+        else:
+            # Swap: held piece becomes current, current becomes held
+            curr_shape.reset_to_spawn(grid_rows)
+            held_shape.reset_to_spawn(grid_rows)
+            self.event_variables.set_held_piece(curr_shape)
+            self.event_variables.set_current_shape(held_shape)
+        
+        self.event_variables.set_can_hold(False)
+
     def keyup_handler(self, event):
         if (event.key == pygame.K_DOWN):
             delay = adjust_speeds(self.event_variables, self.constants)
