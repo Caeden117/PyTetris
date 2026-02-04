@@ -225,4 +225,26 @@ class Shape:
                                   [self.current_grid_col]['coords']['x']
         event_state.set_prev_horiz_movement(elapsed_seconds)
         
+    
+    # Instant Drop Function: Teleports a piece to the lowest valid position and locks it
+    def instant_drop(self, grid_cells):
+        _, y_blocks = get_x_y_block_count(self)
         
+        # 1. Keep moving while the path is CLEAR (returns True)
+        # AND we haven't hit the bottom boundary
+        while self._is_block_collided_down(grid_cells) and (self.current_grid_row + y_blocks < len(grid_cells)):
+            self.current_grid_row += 1
+            
+            # Update pixel Y coordinate
+            self.coords[1] = grid_cells[self.current_grid_row][self.current_grid_col]['coords']['y']
+            
+            BLOCK_SIZE = self.constants['BLOCK_SIZE']
+            shape = self.shape_rotation[self.shape_name][self.current_rotation % 4]
+            self._create_block_rects(shape, self.coords[0], self.coords[1], BLOCK_SIZE)
+
+        # 2. Lock it in by adding piece to the grid and triggering next spawn
+        elapsed = self.event_state.get_elapsed_seconds()
+        delay = self.event_state.get_movement_delay()
+        self._add_shape_to_existing(self.event_state, elapsed, delay, self, grid_cells)
+
+
