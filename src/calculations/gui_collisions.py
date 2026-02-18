@@ -14,6 +14,8 @@ class GuiCollisions:
             self.event_state.set_event_state(4)
             self.event_state.set_score(0)
             self.event_state.set_verticle_speed(self.constants['BLOCK_SIZE'])
+            self.event_state.set_held_piece(None)
+            self.event_state.set_can_hold(True)
             
         if name.lower() == "highscores":
             pass
@@ -29,6 +31,8 @@ class GuiCollisions:
         self.event_state.set_level(1)
         movement_delay = self.constants['movement_delay'][1]
         self.event_state.set_movement_delay(movement_delay)
+        self.event_state.set_held_piece(None)
+        self.event_state.set_can_hold(True)
         
     def game_screen_collisions(self, name):
         if name.lower() == "exit":
