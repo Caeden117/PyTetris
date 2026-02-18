@@ -35,9 +35,20 @@ class EventHandle:
             curr_shape = self.event_variables.get_current_shape()
             curr_shape.increment_current_rotation()
         
-        elif(event.key == pygame.K_SPACE):
+        elif(event.key == pygame.K_ESCAPE): # Use ESC for pause
             curr_pause = self.event_variables.get_pause()
             self.event_variables.set_pause(not curr_pause)
+
+        # Instant Drop mapped to SPACE    
+        elif(event.key == pygame.K_SPACE): # Updating so SPACE instant drops
+            # Get the current state
+            curr_shape = self.event_variables.get_current_shape()
+            grid_cells = self.event_variables.get_grid_matrix()
+
+            # There is an active shape and we are not in a transition state
+            if curr_shape and curr_shape != -1:
+                curr_shape.instant_drop(grid_cells)
+                
 
         elif(event.key == pygame.K_c):
             self.hold_piece_action()
