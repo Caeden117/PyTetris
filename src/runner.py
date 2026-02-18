@@ -20,9 +20,19 @@ class GameRunner:
         self.gui_collisions = GuiCollisions(constants, self.event_variable)
         self.event_handle = event_handler.EventHandle(self.event_variable,
                                                     self.gui_collisions, constants)
+        self.previous_state = None  
 
     def pygame_initializer(self):
         pygame.init()
+        # Initialize and play background music
+        pygame.mixer.init()
+        try:
+            pygame.mixer.music.load('assets/music/background_music.mp3')
+            pygame.mixer.music.set_volume(0.5)  # Set volume to 50%
+            pygame.mixer.music.play(-1)  # -1 means loop forever
+        except pygame.error as e:
+            print(f"Could not load music: {e}")
+
         # Set game screen to windowed because I am using a 1440p monitor and I do not like pygame hijacking my monitor resolution
         # (Caeden)
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.SHOWN)
@@ -54,6 +64,17 @@ class GameRunner:
         start_time = pygame.time.get_ticks()  # Get start time in milliseconds
         while self.event_variable.get_running():
             self.events()
+            # Check for state changes and handle music
+            current_state = self.event_variable.get_event_state()
+            if current_state != self.previous_state:
+                if current_state == 4 and self.previous_state in [0, 3, None]:
+                    # Starting a new game - restart music from beginning
+                    pygame.mixer.music.stop()
+                    pygame.mixer.music.play(-1)
+                elif current_state == 3 and self.previous_state == 4:
+                    # Game ended - stop music
+                    pygame.mixer.music.stop()
+                self.previous_state = current_state
             self.screen.fill(self.background_color)
             self.game_screen.draw_game_container(self.game_container_color)
             self.game_screen.draw_boundaries()
