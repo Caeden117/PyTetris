@@ -49,9 +49,13 @@ class EventHandle:
             if curr_shape and curr_shape != -1:
                 curr_shape.instant_drop(grid_cells)
                 
-
         elif(event.key == pygame.K_c):
             self.hold_piece_action()
+
+        elif event.key == pygame.K_z:
+            curr_shape = self.event_variables.get_current_shape()
+            if curr_shape and curr_shape != -1:
+                curr_shape.decrement_current_rotation()
         
     def hold_piece_action(self):
         """Handle the hold piece mechanic - swap current piece with held piece."""
@@ -86,6 +90,7 @@ class EventHandle:
 
         if event.key in [pygame.K_LEFT, pygame.K_RIGHT]:
             self.keys_pressed.pop(event.key, None)
+
 
     def mousedown_handler(self, event):
         self.event_variables.set_is_mouse_pressed(True)
