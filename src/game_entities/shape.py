@@ -31,6 +31,7 @@ class Shape:
             self.coords[0] = grid_cells[0][spawn_col]['coords']['x']
             self.coords[1] = grid_cells[0][spawn_col]['coords']['y']
 
+
     def increment_current_rotation(self):
         new_rot = self.current_rotation + 1
         shape = self.shape_rotation[self.shape_name][new_rot%4]
@@ -74,6 +75,38 @@ class Shape:
                                     BLOCK_SIZE, BLOCK_SIZE)
                     )
         self.all_rects = all_rects
+
+    def decrement_current_rotation(self):
+        new_rot = self.current_rotation - 1
+        shape = self.shape_rotation[self.shape_name][new_rot % 4]
+
+        BLOCK_SIZE = self.constants['BLOCK_SIZE']
+        x, y = self.coords
+
+        # Temporarily build rects for collision testing
+        self._create_block_rects(shape, x, y, BLOCK_SIZE)
+        locs = self._get_shape_block_idx()
+        grid_cells = self.event_state.get_grid_matrix()
+
+        for loc in locs:
+            row = loc['row']
+            col = loc['col']
+
+            # Out of bounds checks
+            if row < 0 or col < 0:
+                return
+            if row >= len(grid_cells):
+                return
+            if col >= len(grid_cells[0]):
+                return
+
+            # Collision check
+            if grid_cells[row][col]['val'] == 1:
+                return
+
+        # If valid, apply rotation
+        self.current_rotation -= 1
+
 
     def _adjust_rotation(self, shape, x, y, BLOCK_SIZE):
         self._create_block_rects(shape, x, y, BLOCK_SIZE)
