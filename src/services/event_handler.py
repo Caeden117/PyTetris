@@ -35,12 +35,27 @@ class EventHandle:
             curr_shape = self.event_variables.get_current_shape()
             curr_shape.increment_current_rotation()
         
-        elif(event.key == pygame.K_SPACE):
+        elif(event.key == pygame.K_ESCAPE): # Use ESC for pause
             curr_pause = self.event_variables.get_pause()
             self.event_variables.set_pause(not curr_pause)
 
+        # Instant Drop mapped to SPACE    
+        elif(event.key == pygame.K_SPACE): # Updating so SPACE instant drops
+            # Get the current state
+            curr_shape = self.event_variables.get_current_shape()
+            grid_cells = self.event_variables.get_grid_matrix()
+
+            # There is an active shape and we are not in a transition state
+            if curr_shape and curr_shape != -1:
+                curr_shape.instant_drop(grid_cells)
+                
         elif(event.key == pygame.K_c):
             self.hold_piece_action()
+
+        elif event.key == pygame.K_z:
+            curr_shape = self.event_variables.get_current_shape()
+            if curr_shape and curr_shape != -1:
+                curr_shape.decrement_current_rotation()
         
     def hold_piece_action(self):
         """Handle the hold piece mechanic - swap current piece with held piece."""
@@ -75,6 +90,7 @@ class EventHandle:
 
         if event.key in [pygame.K_LEFT, pygame.K_RIGHT]:
             self.keys_pressed.pop(event.key, None)
+
 
     def mousedown_handler(self, event):
         self.event_variables.set_is_mouse_pressed(True)

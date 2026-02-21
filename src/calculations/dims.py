@@ -105,16 +105,25 @@ def calculate_menu_boxes(menu, container_dims, width, height):
     return x, y, width, height
 
 def calculate_shape_pos(grid_row, shape):
+    # Determine the width (in blocks) of the shape in its initial rotation
+    # based on the shapes defined in shapes_rotations.json. The initial
+    # rotation is used when a piece spawns (rotation index 0).
     if shape == 'I_SHAPE':
-        rand_num = random.randint(0, len(grid_row)-1)
-    elif (shape == 'S_SHAPE') or (shape == 'Z_SHAPE') or \
-        shape == 'T_SHAPE':
-        rand_num = random.randint(0, len(grid_row)-3)
-    elif (shape == 'L_SHAPE') or (shape == 'J_SHAPE') or \
-        (shape == 'O_SHAPE'):
-        rand_num = random.randint(0, len(grid_row)-2)
-    coords = grid_row[rand_num]['coords']
-    return coords['x'], coords['y'], rand_num
+        width = 1
+    elif shape in ('S_SHAPE', 'Z_SHAPE', 'T_SHAPE'):
+        width = 3
+    elif shape in ('L_SHAPE', 'J_SHAPE', 'O_SHAPE'):
+        width = 2
+    else:
+        # default to single-column if unknown
+        width = 1
+
+    num_cols = len(grid_row)
+    # compute centered start column so the shape fits within the grid
+    start_col = max(0, (num_cols - width) // 2)
+
+    coords = grid_row[start_col]['coords']
+    return coords['x'], coords['y'], start_col
 
 def get_x_y_block_count(current_shape):
     all_rects = current_shape.all_rects
