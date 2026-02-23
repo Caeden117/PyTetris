@@ -35,7 +35,6 @@ class BagOfSeven:
                 continue
 
             # Instead of Random Colors. Use the map to get the correct color, default to grey if not found
-            print(f"Debug: The key is '{k}'")
             shape_color = srs_colors.get(k, (128, 128, 128))
 
             block_size = self.constants['BLOCK_SIZE']
