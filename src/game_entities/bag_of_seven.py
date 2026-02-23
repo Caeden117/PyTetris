@@ -19,10 +19,24 @@ class BagOfSeven:
         self.container_coords = container_coords
 
     def load_seven(self, grid_row):
+        # SRS (Standard Rotation System) Color Mao
+        srs_colors = {
+            'I_SHAPE' : (0, 255, 255), # Cyan
+            'O_SHAPE' : (255, 255, 0), # Yellow                                           
+            'T_SHAPE' : (128, 0, 128), # Purple
+            'S_SHAPE' : (0, 255, 0),  # Green
+            'Z_SHAPE' : (255, 0, 0), # Red
+            'J_SHAPE' : (0, 0, 255), # Blue
+            'L_SHAPE' : (255, 165, 0) # Orange                                    
+        }
+
         for k, v in self.shape_rotations.items():
             if k == "BLACK":
                 continue
-            random_color = random.choice(self.constants['RANDOM_COLORS'])
+
+            # Instead of Random Colors. Use the map to get the correct color, default to grey if not found
+            shape_color = srs_colors.get(k, (128, 128, 128))
+
             block_size = self.constants['BLOCK_SIZE']
             random_pos = calculate_shape_pos(grid_row, k)
             blit_coords = [random_pos[0], random_pos[1]]
@@ -31,7 +45,7 @@ class BagOfSeven:
                               self.screen,
                               self.shape_rotations,
                               k,
-                              random_color,
+                              shape_color, # Use mapped color here
                               blit_coords,
                               random_pos[2]
                               )
