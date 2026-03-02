@@ -33,6 +33,7 @@ class GuiCollisions:
         self.event_state.set_movement_delay(movement_delay)
         self.event_state.set_held_piece(None)
         self.event_state.set_can_hold(True)
+        self.event_state.set_pause(False)
         
     def game_screen_collisions(self, name):
         if name.lower() == "exit":
