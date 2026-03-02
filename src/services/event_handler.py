@@ -27,6 +27,19 @@ class EventHandle:
         if (event.key == pygame.K_q):
             self.event_variables.set_running(False)
 
+        elif(event.key == pygame.K_SPACE):
+            curr_pause = self.event_variables.get_pause()
+            self.event_variables.set_pause(not curr_pause)
+            if curr_pause:
+                # Unpausing: reset movement timers so piece doesn't jump
+                elapsed = self.event_variables.get_elapsed_seconds()
+                self.event_variables.set_prev_movement(elapsed)
+                self.event_variables.set_prev_horiz_movement(elapsed)
+
+        # Block all game inputs while paused
+        elif self.event_variables.get_pause():
+            return
+
         elif (event.key == pygame.K_DOWN):
             delay = adjust_speeds(self.event_variables, self.constants)
             self.event_variables.set_movement_delay(delay//6)
@@ -34,10 +47,6 @@ class EventHandle:
         elif(event.key == pygame.K_UP):
             curr_shape = self.event_variables.get_current_shape()
             curr_shape.increment_current_rotation()
-        
-        elif(event.key == pygame.K_SPACE):
-            curr_pause = self.event_variables.get_pause()
-            self.event_variables.set_pause(not curr_pause)
 
         elif(event.key == pygame.K_c):
             self.hold_piece_action()
@@ -91,5 +100,9 @@ class EventHandle:
             type_func(event)
 
         keys = pygame.key.get_pressed()
-        self.event_variables.set_left_pressed(keys[pygame.K_LEFT])
-        self.event_variables.set_right_pressed(keys[pygame.K_RIGHT])
+        if self.event_variables.get_pause():
+            self.event_variables.set_left_pressed(False)
+            self.event_variables.set_right_pressed(False)
+        else:
+            self.event_variables.set_left_pressed(keys[pygame.K_LEFT])
+            self.event_variables.set_right_pressed(keys[pygame.K_RIGHT])
