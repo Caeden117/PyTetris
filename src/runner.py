@@ -61,8 +61,19 @@ class GameRunner:
         clock = pygame.time.Clock()  # Create a Clock object
         FPS = self.event_variable.get_fps()
         start_time = pygame.time.get_ticks()  # Get start time in milliseconds
+        previous_pause_state = False 
         while self.event_variable.get_running():
             self.events()
+            # Check for pause state changes
+            current_pause_state = self.event_variable.get_pause()
+            if current_pause_state != previous_pause_state:
+                if current_pause_state:
+                    # Game was paused - pause music
+                    pygame.mixer.music.pause()
+                else:
+                    # Game was unpaused - unpause music
+                    pygame.mixer.music.unpause()
+                previous_pause_state = current_pause_state
             # Check for state changes and handle music
             current_state = self.event_variable.get_event_state()
             if current_state != self.previous_state:
