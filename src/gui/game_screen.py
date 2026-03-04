@@ -208,7 +208,6 @@ class GameScreen(Screen):
         block_size = self.game.get('block_size', 35)
         if not next_shapes_container:
             return
-
         # compute container position similar to other boxes
         x, y = place_items_at_offset_percent(self.coords['cont_x'],
                                             self.coords['cont_y'],
@@ -216,22 +215,24 @@ class GameScreen(Screen):
                                             self.coords['cont_height'],
                                             next_shapes_container['x_off'],
                                             0.55)
-        # size: 6 blocks wide, 6 blocks tall (fits lines of text)
-        rows, cols = 6, 6
-        width = block_size * rows
-        height = block_size * cols
 
-        # container color (use same color as next_shapes if available)
-        cont_color = next_shapes_container.get('color', (200, 200, 200))
-        pygame.draw.rect(self.screen, cont_color, (x, y, width, height), width=2)
-        self.rectangles.append({"rect": pygame.Rect(x, y, width, height),
-                                "name": 'CONTROLS_CONTAINER'})
+        # Create a smaller font to prevent text overflow (scale down the configured text font)
+        try:
+            tf = self.constants.get('text_font', None)
+            if tf and isinstance(tf, dict):
+                base_size = int(tf.get('size', 14))
+                base_path = tf.get('path', None)
+                small_size = max(10, int(base_size * 0.75))
+                if base_path:
+                    small_font = pygame.font.Font(base_path, small_size)
+                else:
+                    small_font = pygame.font.SysFont(None, small_size)
+            else:
+                small_font = pygame.font.SysFont(None, 14)
+        except Exception:
+            small_font = pygame.font.SysFont(None, 14)
 
-        # Render title
-        title_surface = font.render('CONTROLS', True, color)
-        self.screen.blit(title_surface, (x + 6, y + 6))
-
-        # List of control lines to show
+        # List of control lines to show (left label, right label)
         controls = [
             ('Move Left/Right:', 'Left / Right Arrow'),
             ('Soft Drop:', 'Down Arrow'),
@@ -241,14 +242,39 @@ class GameScreen(Screen):
             ('Hold Piece:', 'C')
         ]
 
-        # Render each control line with small vertical spacing
-        line_y = y + 28
+        padding_x = 8
+        padding_y = 6
+        # Measure text to compute needed container size
+        max_width = 0
+        line_height = small_font.get_linesize()
         for left, right in controls:
-            left_surf = font.render(left, True, color)
-            right_surf = font.render(right, True, color)
-            self.screen.blit(left_surf, (x + 6, line_y))
-            self.screen.blit(right_surf, (x + 6, line_y + 16))
-            line_y += 32
+            lw = small_font.size(left)[0]
+            rw = small_font.size(right)[0]
+            max_width = max(max_width, lw + 12 + rw)
+
+        title_w = small_font.size('CONTROLS')[0]
+        container_width = max(max_width, title_w) + padding_x * 2
+        container_height = padding_y * 2 + line_height * (len(controls) + 1)
+
+        # Draw container
+        cont_color = next_shapes_container.get('color', (200, 200, 200))
+        pygame.draw.rect(self.screen, cont_color, (x, y, container_width, container_height), width=2)
+        self.rectangles.append({"rect": pygame.Rect(x, y, container_width, container_height),
+                                "name": 'CONTROLS_CONTAINER'})
+
+        # Render title
+        title_surface = small_font.render('CONTROLS', True, color)
+        self.screen.blit(title_surface, (x + padding_x, y + padding_y))
+
+        # Render each control line
+        line_y = y + padding_y + line_height
+        for left, right in controls:
+            left_surf = small_font.render(left, True, color)
+            right_surf = small_font.render(right, True, color)
+            self.screen.blit(left_surf, (x + padding_x, line_y))
+            # position right label towards the right side of the container
+            self.screen.blit(right_surf, (x + container_width - padding_x - right_surf.get_width(), line_y))
+            line_y += line_height
     
     def existing_shapes_blit(self):
         existing_shapes = self.event_state.get_existing_shapes()
@@ -320,11 +346,11 @@ class GameScreen(Screen):
         self.draw_existing_shapes(grid_rows)
         self.movements(grid_rows)
         self.next_shapes_blit()
-    # Draw controls helper panel
-    self.controls_blit(color, font)
+        # Draw controls helper panel
+        self.controls_blit(color, font)
+        # update game state and detect line clears
         self.event_state.set_game_over(detect_game_over(grid_rows))
         lc = detect_line_complete(grid_rows, self.event_state, self.constants)
         self.event_state.set_line_complete(lc)
-        self.event_state.set_game_over(detect_game_over(grid_rows))
         self.level_change_check()
         
