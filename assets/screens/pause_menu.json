@@ -1,0 +1,20 @@
+{
+    "elements": [
+        "Resume"
+    ],
+    "box_dims": {
+        "width": 0.2,
+        "height": 0.07
+    },
+    "box_line_width": 1,
+    "font_color": [255, 255, 255],
+    "title_coords": {"x_off": 0.42, "y_off": 0.30},
+    "coords": {
+        "Resume": {
+            "x_off": 0.40,
+            "y_off": 0.42,
+            "font_size": 32,
+            "icon": false
+        }
+    }
+}

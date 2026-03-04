@@ -1,6 +1,7 @@
 from .main_menu import MainMenu
 from .game_screen import GameScreen
 from .game_over import GameOver
+from .pause_menu import PauseMenu
 from ..services import read_files
 
 class LoadScreenState:
@@ -26,6 +27,10 @@ class LoadScreenState:
                 elif v == "game_over":
                     state_obj = GameOver(self.event_state, self.constants,
                                          self.screen, entity_dict)
+                elif v == "pause_menu":
+                    state_obj = PauseMenu(self.constants, self.title,
+                                          entity_dict, self.event_state,
+                                          self.screen)
                 event_objects[v] = state_obj
             except Exception as e:
                 print(str(e))
