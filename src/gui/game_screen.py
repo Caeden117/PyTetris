@@ -200,6 +200,55 @@ class GameScreen(Screen):
         for q in queue_3:
             q.display_shape_in_next(y_off)
             y_off += 0.3
+
+    def controls_blit(self, color, font):
+        """Draw a controls sidebar listing keybindings for the player."""
+        # Place controls near the next-shapes area; use block_size for sizing
+        next_shapes_container = self.game.get('next_shapes_container', None)
+        block_size = self.game.get('block_size', 35)
+        if not next_shapes_container:
+            return
+
+        # compute container position similar to other boxes
+        x, y = place_items_at_offset_percent(self.coords['cont_x'],
+                                            self.coords['cont_y'],
+                                            self.coords['cont_width'],
+                                            self.coords['cont_height'],
+                                            next_shapes_container['x_off'],
+                                            0.55)
+        # size: 6 blocks wide, 6 blocks tall (fits lines of text)
+        rows, cols = 6, 6
+        width = block_size * rows
+        height = block_size * cols
+
+        # container color (use same color as next_shapes if available)
+        cont_color = next_shapes_container.get('color', (200, 200, 200))
+        pygame.draw.rect(self.screen, cont_color, (x, y, width, height), width=2)
+        self.rectangles.append({"rect": pygame.Rect(x, y, width, height),
+                                "name": 'CONTROLS_CONTAINER'})
+
+        # Render title
+        title_surface = font.render('CONTROLS', True, color)
+        self.screen.blit(title_surface, (x + 6, y + 6))
+
+        # List of control lines to show
+        controls = [
+            ('Move Left/Right:', 'Left / Right Arrow'),
+            ('Soft Drop:', 'Down Arrow'),
+            ('Hard Drop:', 'Spacebar'),
+            ('Rotate CW:', 'X or Up Arrow'),
+            ('Rotate CCW:', 'Z'),
+            ('Hold Piece:', 'C')
+        ]
+
+        # Render each control line with small vertical spacing
+        line_y = y + 28
+        for left, right in controls:
+            left_surf = font.render(left, True, color)
+            right_surf = font.render(right, True, color)
+            self.screen.blit(left_surf, (x + 6, line_y))
+            self.screen.blit(right_surf, (x + 6, line_y + 16))
+            line_y += 32
     
     def existing_shapes_blit(self):
         existing_shapes = self.event_state.get_existing_shapes()
@@ -271,6 +320,8 @@ class GameScreen(Screen):
         self.draw_existing_shapes(grid_rows)
         self.movements(grid_rows)
         self.next_shapes_blit()
+    # Draw controls helper panel
+    self.controls_blit(color, font)
         self.event_state.set_game_over(detect_game_over(grid_rows))
         lc = detect_line_complete(grid_rows, self.event_state, self.constants)
         self.event_state.set_line_complete(lc)

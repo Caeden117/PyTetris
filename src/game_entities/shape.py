@@ -87,25 +87,60 @@ class Shape:
         self._create_block_rects(shape, x, y, BLOCK_SIZE)
         locs = self._get_shape_block_idx()
         grid_cells = self.event_state.get_grid_matrix()
+        # If there are no grid cells available, cancel rotation
+        if len(grid_cells) == 0 or len(grid_cells[0]) == 0:
+            return
 
-        for loc in locs:
+        # Compute min/max columns of the rotated shape
+        cols = [loc['col'] for loc in locs]
+        rows = [loc['row'] for loc in locs]
+        if len(cols) == 0:
+            return
+        min_col = min(cols)
+        max_col = max(cols)
+        min_row = min(rows)
+        max_row = max(rows)
+
+        grid_rows = len(grid_cells)
+        grid_cols = len(grid_cells[0])
+
+        # Determine minimal horizontal shift required to bring shape inside bounds
+        needed_left_shift = 0
+        needed_right_shift = 0
+        if max_col >= grid_cols:
+            # shape goes past right wall -> shift left
+            needed_left_shift = max_col - (grid_cols - 1)
+        if min_col < 0:
+            # shape goes past left wall -> shift right
+            needed_right_shift = -min_col
+
+        # Prefer left shift when hitting right wall (as requested). Compute new origin col.
+        new_grid_col = self.current_grid_col - needed_left_shift + needed_right_shift
+        # New x coordinate for the attempted rotated position
+        new_x = x - (needed_left_shift * BLOCK_SIZE) + (needed_right_shift * BLOCK_SIZE)
+
+        # Create rects at the potentially shifted x to re-evaluate collisions/bounds
+        self._create_block_rects(shape, new_x, y, BLOCK_SIZE)
+        new_locs = self._get_shape_block_idx()
+
+        # Validate rows/cols and collisions at shifted position
+        for loc in new_locs:
             row = loc['row']
             col = loc['col']
-
             # Out of bounds checks
-            if row < 0 or col < 0:
+            if row < 0 or col < 0 or row >= grid_rows or col >= grid_cols:
                 return
-            if row >= len(grid_cells):
-                return
-            if col >= len(grid_cells[0]):
-                return
-
-            # Collision check
+            # Collision check against existing filled cells
             if grid_cells[row][col]['val'] == 1:
                 return
 
-        # If valid, apply rotation
+        # If valid, apply rotation and update position
         self.current_rotation -= 1
+        self.current_grid_col = new_grid_col
+        # update pixel x coordinate to match the grid cell origin
+        cell = grid_cells[self.current_grid_row][self.current_grid_col]
+        x_coord = cell['coords']['x']
+        self.coords[0] = x_coord
 
 
     def _adjust_rotation(self, shape, x, y, BLOCK_SIZE):
