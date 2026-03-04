@@ -171,9 +171,6 @@ class GameScreen(Screen):
 
 
     def game_object_blit(self, grid_rows, font, color):
-        if self.event_state.get_pause():
-            self.pause_text_blit(font, color)
-            return
         self.game_over_state_change()
         curr_shape = self.event_state.get_current_shape()
         b7 = self.event_state.get_bag_of_7()
@@ -192,6 +189,9 @@ class GameScreen(Screen):
             self.event_state.set_current_shape(shape)
 
         self.event_state.get_current_shape().draw_shape()
+
+        if self.event_state.get_pause():
+            self.pause_text_blit(font, color)
 
     def next_shapes_blit(self):
         b7 = self.event_state.get_bag_of_7()
@@ -269,11 +269,12 @@ class GameScreen(Screen):
         if self.event_state.get_game_over():
             return
         self.draw_existing_shapes(grid_rows)
-        self.movements(grid_rows)
-        self.next_shapes_blit()
-        self.event_state.set_game_over(detect_game_over(grid_rows))
-        lc = detect_line_complete(grid_rows, self.event_state, self.constants)
-        self.event_state.set_line_complete(lc)
-        self.event_state.set_game_over(detect_game_over(grid_rows))
-        self.level_change_check()
+        if not self.event_state.get_pause():
+            self.movements(grid_rows)
+            self.next_shapes_blit()
+            self.event_state.set_game_over(detect_game_over(grid_rows))
+            lc = detect_line_complete(grid_rows, self.event_state, self.constants)
+            self.event_state.set_line_complete(lc)
+            self.event_state.set_game_over(detect_game_over(grid_rows))
+            self.level_change_check()
         
