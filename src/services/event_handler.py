@@ -36,8 +36,13 @@ class EventHandle:
             curr_shape.increment_current_rotation()
         
         elif(event.key == pygame.K_ESCAPE): # Use ESC for pause
-            curr_pause = self.event_variables.get_pause()
-            self.event_variables.set_pause(not curr_pause)
+            current_state = self.event_variables.get_event_state()
+            if current_state == 4:
+                self.event_variables.set_pause(True)
+                self.event_variables.set_event_state(2)
+            elif current_state == 2:
+                self.event_variables.set_pause(False)
+                self.event_variables.set_event_state(4)
 
         # Instant Drop mapped to SPACE    
         elif(event.key == pygame.K_SPACE): # Updating so SPACE instant drops

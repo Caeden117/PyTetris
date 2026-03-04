@@ -4,6 +4,7 @@ class GuiCollisions:
         self.constants = constants
         self.event_state = event_state
         self.func_mapper = {0:self.main_menu_collisions,
+                            2:self.pause_menu_collisions,
                             4:self.game_screen_collisions,
                             3:self.game_over_collisions}
 
@@ -34,6 +35,11 @@ class GuiCollisions:
         self.event_state.set_held_piece(None)
         self.event_state.set_can_hold(True)
         
+    def pause_menu_collisions(self, name):
+        if name.lower() == "resume":
+            self.event_state.set_pause(False)
+            self.event_state.set_event_state(4)
+
     def game_screen_collisions(self, name):
         if name.lower() == "exit":
             self.level_score_reset()

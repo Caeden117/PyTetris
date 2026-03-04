@@ -24,7 +24,7 @@ class GameRunner:
 
     def pygame_initializer(self):
         pygame.init()
-        # Initialize and play background music
+        # Initialize music (don't autoplay - only plays during gameplay)
         pygame.mixer.init()
         try:
             pygame.mixer.music.load('assets/music/background_music.mp3')
@@ -78,8 +78,7 @@ class GameRunner:
             current_state = self.event_variable.get_event_state()
             if current_state != self.previous_state:
                 if current_state == 4 and self.previous_state in [0, 3, None]:
-                    # Starting a new game - restart music from beginning
-                    pygame.mixer.music.stop()
+                    # Starting a new game - start music
                     pygame.mixer.music.play(-1)
                 elif current_state == 3 and self.previous_state == 4:
                     # Game ended - stop music
@@ -87,7 +86,9 @@ class GameRunner:
                 elif current_state == 0 and self.previous_state == 4:
                     # Returned to menu from game - stop music
                     pygame.mixer.music.stop()
-                self.previous_state = current_state
+                # Don't update previous_state when pausing/unpausing
+                if current_state != 2 and self.previous_state != 2:
+                    self.previous_state = current_state
             self.screen.fill(self.background_color)
             self.game_screen.draw_game_container(self.game_container_color)
             self.game_screen.draw_boundaries()
