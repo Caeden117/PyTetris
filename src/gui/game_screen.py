@@ -177,21 +177,23 @@ class GameScreen(Screen):
         self.game_over_state_change()
         curr_shape = self.event_state.get_current_shape()
         b7 = self.event_state.get_bag_of_7()
-        if curr_shape is None:
+
+        if curr_shape is None or curr_shape == -1:
             b7 = self.load_shape_objects()
-            b7.load_seven(grid_rows[0])
+            if len(b7.seven) == 0:
+                b7.load_seven(grid_rows[0])
             b7.append_queue()
             shape = b7.get_queue_element()
             self.event_state.set_current_shape(shape)
-        
-        if len(b7.seven) == 0:
-            b7.load_seven(grid_rows[0])
-        
-        if curr_shape == -1:
-            shape = b7.get_queue_element()
-            self.event_state.set_current_shape(shape)
+            curr_shape = shape
+    
+        # Ghost Piece Logic
+        if curr_shape and curr_shape != -1:
+            ghost_row = curr_shape.get_ghost_grid_row(grid_rows)
+            ghost_y = grid_rows[ghost_row][curr_shape.current_grid_col]['coords']['y']
+            self.draw_ghost_shape(curr_shape, curr_shape.coords[0], ghost_y)
+            curr_shape.draw_shape()
 
-        self.event_state.get_current_shape().draw_shape()
 
     def next_shapes_blit(self):
         b7 = self.event_state.get_bag_of_7()
@@ -232,7 +234,28 @@ class GameScreen(Screen):
                                  (x, y, block_size, block_size),
                                  1
                                  )
-                
+    
+    # Draws a hollow version of the block using SRS color
+    def draw_ghost_shape(self, shape_obj, x, y):
+        """Draws a hollow ghost piece with a Y-origin correction."""
+        BLOCK_SIZE = self.constants['BLOCK_SIZE']
+        color = shape_obj.block_color
+        shape_layout = shape_obj.shape_rotation[shape_obj.shape_name][shape_obj.current_rotation % 4]
+
+        # Lift the drawing origin up by 2 blocks to align the logical destination (+2) with the visual grid rows.
+        drawing_y = y - (2 * BLOCK_SIZE)
+
+        for row_idx, row in enumerate(shape_layout):
+            for col_idx, block in enumerate(row):
+                if block == 1:
+                    # Calculate block-specific coordinates
+                    rect_x = x + (col_idx * BLOCK_SIZE)
+                    rect_y = drawing_y + (row_idx * BLOCK_SIZE)
+                    
+                    # Draw hollow rectangle (width=2)
+                    pygame.draw.rect(self.screen, color, (rect_x, rect_y, BLOCK_SIZE, BLOCK_SIZE), 2)
+
+
     def preloader(self):
         existing_rects = self.event_state.get_menu_rectangles().get(4)
         if not self.rectangle_menu_set or existing_rects is None:

@@ -280,4 +280,40 @@ class Shape:
         delay = self.event_state.get_movement_delay()
         self._add_shape_to_existing(self.event_state, elapsed, delay, self, grid_cells)
 
+    
+    def get_ghost_grid_row(self, grid_cells):
+        BLOCK_SIZE = self.constants['BLOCK_SIZE']
+        shape = self.shape_rotation[self.shape_name][self.current_rotation % 4]
+        
+        # Force rect creation to prevent crashes
+        self._create_block_rects(shape, self.coords[0], self.coords[1], BLOCK_SIZE)
+        test_row = self.current_grid_row
+        _, y_blocks = get_x_y_block_count(self)
+        grid_height = len(grid_cells)
+
+        # Move down until we hit something
+        while (test_row + y_blocks < grid_height):
+            next_row = test_row + 1
+            # Get Y coordinate for the next row
+            temp_y = grid_cells[next_row][self.current_grid_col]['coords']['y']
+            self._create_block_rects(shape, self.coords[0], temp_y, BLOCK_SIZE)
+
+            # If the path below is clear, increment test_row
+            if self._is_block_collided_down(grid_cells):
+                test_row = next_row
+            else:
+                break
+        
+        # Reset rects back to real piece position for standard drawing
+        self._create_block_rects(shape, self.coords[0], self.coords[1], BLOCK_SIZE)
+
+        # Offset add 2 to sync with your +2 collision logic, 
+        final_ghost_row = test_row + 2
+        
+        if (final_ghost_row + y_blocks) > grid_height:
+            final_ghost_row = grid_height - y_blocks
+            
+        return final_ghost_row
+
+       
 
