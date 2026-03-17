@@ -25,6 +25,17 @@ class GameRunner:
     def pygame_initializer(self):
         pygame.init()
         # Initialize and play background music
+
+        # Dynamic Window Scaling: Get the actual resolution of the computers screen
+        monitor_info = pygame.display.Info()
+        monitor_h = monitor_info.current_h
+
+        # If the height from the constants are too big for the monitor, scale it down
+        if self.SCREEN_HEIGHT > int(monitor_h * 0.85):
+            print(f"Original resolution ({self.SCREEN_HEIGHT}) too large for screen. Scaling down.")
+            self.SCREEN_HEIGHT = int(monitor_h * 0.85)
+            self.SCREEN_WIDTH = int(self.SCREEN_HEIGHT * 1.33)
+
         pygame.mixer.init()
         try:
             pygame.mixer.music.load('assets/music/background_music.mp3')
@@ -32,8 +43,7 @@ class GameRunner:
         except pygame.error as e:
             print(f"Could not load music: {e}")
 
-        # Set game screen to windowed because I am using a 1440p monitor and I do not like pygame hijacking my monitor resolution
-        # (Caeden)
+        # Set game screen to match computer res because its too big on my Mac (Abel)
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.SHOWN)
         self.game_screen = GameScreen(self.screen, constants, self.event_variable,
                                       )

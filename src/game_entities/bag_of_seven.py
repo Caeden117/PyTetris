@@ -52,17 +52,35 @@ class BagOfSeven:
             self.seven.append(shape_obj)
         self.seven  = random.sample(self.seven, len(self.seven))
     
-    def append_queue(self):
-        if len(self.queue) == 0:
-            for x in range(0, 3):
-                self.queue.append(self.seven[x])
-            del self.seven[0: 3]
-            return
-        self.queue.append(self.seven[0])
-        del self.seven[0]
 
-    def get_queue_element(self):
-        element = self.queue[0]
-        del self.queue[0]
-        self.append_queue()
+    def append_queue(self, grid_row=None):
+        # If the seven bag is empty, refill it immediately
+        if len(self.seven) == 0:
+            self.load_seven(grid_row)
+
+        # If queue is empty, grab the first 3
+        if len(self.queue) == 0:
+            # Make sure we have at least 3 in seven (we should after load_seven)
+            num_to_take = min(len(self.seven), 3)
+            for _ in range(num_to_take):
+                self.queue.append(self.seven.pop(0))
+            return
+
+        # Move one from bag to queue
+        if len(self.seven) > 0:
+            self.queue.append(self.seven.pop(0))
+
+
+    def get_queue_element(self, grid_row=None):
+        # If queue is somehow empty, fill it
+        if len(self.queue) == 0:
+            self.append_queue(grid_row)
+        
+        # Get the next piece
+        element = self.queue.pop(0)
+        
+        # Refill the queue so there's always a Next Up preview
+        self.append_queue(grid_row)
+        
         return element
+

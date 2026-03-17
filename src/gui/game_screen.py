@@ -1,4 +1,5 @@
 import pygame
+import copy
 from .screen_loader import Screen
 from ..calculations.dims import *
 from ..services.read_files import read_json
@@ -22,6 +23,9 @@ class GameScreen(Screen):
     def load_shape_objects(self):
         shapes_file = self.constants['shapes']
         shapes_dict = read_json(shapes_file)
+
+        # Use a deep copy so rotation tests dont mess up the master template
+        shapes_copy = copy.deepcopy(shapes_dict)
         state = self.event_state.get_event_state()
         coords = self.event_state.get_menu_rectangles()[state] #GAME_GRID
         grid_coords = [x['rect'] for x in coords if x['name']=="GAME_GRID"][0]
@@ -31,7 +35,7 @@ class GameScreen(Screen):
         bag_of_seven = BagOfSeven(self.constants,
                                   self.event_state,
                                   self.screen,
-                                  shapes_dict,
+                                  shapes_copy, # Use the copy
                                   grid_coords)
         self.event_state.set_bag_of_7(bag_of_seven)
         return bag_of_seven
@@ -171,27 +175,42 @@ class GameScreen(Screen):
 
 
     def game_object_blit(self, grid_rows, font, color):
+        # Handle Pause State
         if self.event_state.get_pause():
             self.pause_text_blit(font, color)
             return
+
+        # Check for Game Over
         self.game_over_state_change()
+        if self.event_state.get_event_state() == 3: # Game Over state
+            return
+
         curr_shape = self.event_state.get_current_shape()
         b7 = self.event_state.get_bag_of_7()
-        if curr_shape is None:
-            b7 = self.load_shape_objects()
-            b7.load_seven(grid_rows[0])
-            b7.append_queue()
-            shape = b7.get_queue_element()
-            self.event_state.set_current_shape(shape)
-        
-        if len(b7.seven) == 0:
-            b7.load_seven(grid_rows[0])
-        
-        if curr_shape == -1:
-            shape = b7.get_queue_element()
-            self.event_state.set_current_shape(shape)
 
-        self.event_state.get_current_shape().draw_shape()
+        # If no shape exists, get one from the bag
+        if curr_shape is None or curr_shape == -1:
+            if b7 is None:
+                b7 = self.load_shape_objects()
+    
+            curr_shape = b7.get_queue_element(grid_rows[0])
+            self.event_state.set_current_shape(curr_shape)
+
+        # Drawing Logic
+        if curr_shape and curr_shape != -1:
+            # prevent NoneType error
+            if curr_shape.all_rects is None:
+                shape_layout = curr_shape.shape_rotation[curr_shape.shape_name][curr_shape.current_rotation % 4]
+                curr_shape._create_block_rects(shape_layout, curr_shape.coords[0], curr_shape.coords[1], self.constants['BLOCK_SIZE'])
+
+            # Draw Ghost First 
+            ghost_row = curr_shape.get_ghost_grid_row(grid_rows)
+            # Find the actual Y pixel coordinate for that ghost row
+            ghost_y = grid_rows[ghost_row][curr_shape.current_grid_col]['coords']['y']
+            self.draw_ghost_shape(curr_shape, curr_shape.coords[0], ghost_y)
+
+            # Draw Active Piece Second 
+            curr_shape.draw_shape()
 
     def next_shapes_blit(self):
         b7 = self.event_state.get_bag_of_7()
@@ -208,7 +227,7 @@ class GameScreen(Screen):
     
     def movements(self, grid_rows):
         current_shape = self.event_state.get_current_shape()
-        if current_shape == -1:
+        if current_shape is None and -1:
             return
         current_shape.move_shape_down(grid_rows)
         current_shape.move_shape_horizontal(grid_rows)
@@ -232,12 +251,36 @@ class GameScreen(Screen):
                                  (x, y, block_size, block_size),
                                  1
                                  )
-                
+    
+    # Draws a hollow version of the block using SRS color
+    def draw_ghost_shape(self, shape_obj, x, y):
+        """Draws a hollow ghost piece with a Y-origin correction."""
+        BLOCK_SIZE = self.constants['BLOCK_SIZE']
+        color = shape_obj.block_color
+        shape_layout = shape_obj.shape_rotation[shape_obj.shape_name][shape_obj.current_rotation % 4]
+
+        # Lift the drawing origin up by 2 blocks to align 
+        drawing_y = y - (1 * BLOCK_SIZE)
+
+        for row_idx, row in enumerate(shape_layout):
+            for col_idx, block in enumerate(row):
+                if block == 1:
+                    # Calculate block specific coordinates
+                    rect_x = x + (col_idx * BLOCK_SIZE)
+                    rect_y = drawing_y + (row_idx * BLOCK_SIZE)
+                    
+                    # Draw hollow rectangle (width=2)
+                    pygame.draw.rect(self.screen, color, (rect_x, rect_y, BLOCK_SIZE, BLOCK_SIZE), 2)
+
+
     def preloader(self):
         existing_rects = self.event_state.get_menu_rectangles().get(4)
         if not self.rectangle_menu_set or existing_rects is None:
             self.event_state.set_menu_rectangles(self.rectangles,
                                         self.event_state.get_event_state())
+            
+            # Force a fresh bag and grid when the game starts/restarts
+            self.load_shape_objects()
             gmatrix = GridMatrix(self.constants, self.event_state)
             gmatrix.load_grid()
             self.rectangle_menu_set = True
@@ -270,7 +313,7 @@ class GameScreen(Screen):
             return
         self.draw_existing_shapes(grid_rows)
         self.movements(grid_rows)
-        self.next_shapes_blit()
+        self.next_shapes_blit()    
         self.event_state.set_game_over(detect_game_over(grid_rows))
         lc = detect_line_complete(grid_rows, self.event_state, self.constants)
         self.event_state.set_line_complete(lc)
