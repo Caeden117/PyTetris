@@ -127,13 +127,20 @@ def calculate_shape_pos(grid_row, shape):
 
 def get_x_y_block_count(current_shape):
     all_rects = current_shape.all_rects
-    x_count, y_count = [], []
-    for rect in all_rects:
-        x_count.append(rect.x)
-        y_count.append(rect.y)
-    x_count = len(set(x_count))
-    y_count = len(set(y_count))
-    return x_count, y_count
+    if not all_rects:
+        return 0, 0
+        
+    block_size = current_shape.constants['BLOCK_SIZE']
+    
+    y_coords = [rect.y for rect in all_rects]
+    x_coords = [rect.x for rect in all_rects]
+    
+    # (Max - Min) / block_size + 1 gives the actual number of blocks occupied
+    y_span = (max(y_coords) - min(y_coords)) // block_size + 1
+    x_span = (max(x_coords) - min(x_coords)) // block_size + 1
+    
+    return x_span, y_span
+
     
     
 

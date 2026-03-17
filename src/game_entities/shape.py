@@ -157,18 +157,23 @@ class Shape:
                         BLOCK_SIZE=BLOCK_SIZE,
                         x=x, y=y)
         
-    def _get_shape_block_idx(self):
+    def _get_shape_block_idx(self, rects=None):
         block_size = self.constants['BLOCK_SIZE']
         locs = []
-        for rect in self.all_rects:
+
+        target_rects = rects if rects is not None else self.all_rects
+        if target_rects is None:
+            return []
+        
+        for rect in target_rects:
             gx, gy, _, _ = self.event_state.get_game_grid_coords()
             x_loc = (rect.x - gx)//block_size
             y_loc = ((rect.y - gy)//block_size)+2
             locs.append({"row":y_loc, 'col':x_loc})
         return locs
     
-    def _is_block_collided_down(self, grid_cells):
-        shape_block_locs = self._get_shape_block_idx()
+    def _is_block_collided_down(self, grid_cells, rects=None):
+        shape_block_locs = self._get_shape_block_idx(rects=rects)
         for loc in shape_block_locs:
             row = loc['row']
             col = loc['col']
@@ -263,8 +268,7 @@ class Shape:
     def instant_drop(self, grid_cells):
         _, y_blocks = get_x_y_block_count(self)
         
-        # 1. Keep moving while the path is CLEAR (returns True)
-        # AND we haven't hit the bottom boundary
+        # Keep moving while the path is clear (returns True) and we haven't hit the bottom boundary
         while self._is_block_collided_down(grid_cells) and (self.current_grid_row + y_blocks < len(grid_cells)):
             self.current_grid_row += 1
             
@@ -275,7 +279,7 @@ class Shape:
             shape = self.shape_rotation[self.shape_name][self.current_rotation % 4]
             self._create_block_rects(shape, self.coords[0], self.coords[1], BLOCK_SIZE)
 
-        # 2. Lock it in by adding piece to the grid and triggering next spawn
+        # Lock it in by adding piece to the grid and triggering next spawn
         elapsed = self.event_state.get_elapsed_seconds()
         delay = self.event_state.get_movement_delay()
         self._add_shape_to_existing(self.event_state, elapsed, delay, self, grid_cells)
@@ -285,35 +289,37 @@ class Shape:
         BLOCK_SIZE = self.constants['BLOCK_SIZE']
         shape = self.shape_rotation[self.shape_name][self.current_rotation % 4]
         
-        # Force rect creation to prevent crashes
-        self._create_block_rects(shape, self.coords[0], self.coords[1], BLOCK_SIZE)
+        if self.all_rects is None:
+            self._create_block_rects(shape, self.coords[0], self.coords[1], BLOCK_SIZE)
+
+        # Generate test rects without overwriting the real ones
+        def get_test_rects(test_y):
+            all_rects = []
+            for r_idx, row in enumerate(shape):
+                for c_idx, block in enumerate(row):
+                    if block == 1:
+                        all_rects.append(pygame.Rect(self.coords[0] + c_idx * BLOCK_SIZE,
+                                                    test_y + r_idx * BLOCK_SIZE,
+                                                    BLOCK_SIZE, BLOCK_SIZE))
+            return all_rects
+
         test_row = self.current_grid_row
         _, y_blocks = get_x_y_block_count(self)
         grid_height = len(grid_cells)
 
-        # Move down until we hit something
         while (test_row + y_blocks < grid_height):
             next_row = test_row + 1
-            # Get Y coordinate for the next row
             temp_y = grid_cells[next_row][self.current_grid_col]['coords']['y']
-            self._create_block_rects(shape, self.coords[0], temp_y, BLOCK_SIZE)
-
-            # If the path below is clear, increment test_row
-            if self._is_block_collided_down(grid_cells):
+            
+            # Pass results to the collision checker
+            test_rects = get_test_rects(temp_y)
+            if self._is_block_collided_down(grid_cells, rects=test_rects):
                 test_row = next_row
             else:
                 break
         
-        # Reset rects back to real piece position for standard drawing
-        self._create_block_rects(shape, self.coords[0], self.coords[1], BLOCK_SIZE)
-
-        # Offset add 2 to sync with your +2 collision logic, 
         final_ghost_row = test_row + 2
-        
         if (final_ghost_row + y_blocks) > grid_height:
             final_ghost_row = grid_height - y_blocks
             
         return final_ghost_row
-
-       
-
